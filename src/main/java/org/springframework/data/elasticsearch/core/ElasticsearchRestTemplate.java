@@ -596,7 +596,11 @@ public class ElasticsearchRestTemplate extends AbstractElasticsearchTemplate {
 	// region helper methods
 	@Override
 	protected String getClusterVersion() {
-		return "6.8.8";
+		try {
+			return execute(client -> client.info(RequestOptions.DEFAULT)).getVersion().toString();
+		} catch (Exception ignored) {
+			return null;
+		}
 	}
 
 	@Override

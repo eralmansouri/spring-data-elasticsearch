@@ -222,7 +222,7 @@ public final class DocumentAdapters {
 			details.add(from(detail));
 		}
 
-		return new Explanation(explanation.isMatch(), explanation.getValue().doubleValue(), explanation.getDescription(),
+		return new Explanation(explanation.isMatch(), (double) explanation.getValue(), explanation.getDescription(),
 				details);
 	}
 

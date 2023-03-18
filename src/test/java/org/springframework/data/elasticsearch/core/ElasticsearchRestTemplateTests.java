@@ -28,7 +28,7 @@ import java.util.Map;
 import org.elasticsearch.action.support.ActiveShardCount;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.core.TimeValue;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.json.JSONException;
@@ -164,7 +164,7 @@ public class ElasticsearchRestTemplateTests extends ElasticsearchTemplateTests {
 		assertEquals(request.getSearchRequest().source().toString(), expectedSearchRequest, false);
 		assertThat(request.isAbortOnVersionConflict()).isTrue();
 		assertThat(request.getBatchSize()).isEqualTo(10);
-		assertThat(request.getMaxDocs()).isEqualTo(12);
+		assertThat(request.getSize()).isEqualTo(12);
 		assertThat(request.getPipeline()).isEqualTo("pipeline");
 		assertThat(request.getRequestsPerSecond()).isEqualTo(5F);
 		assertThat(request.getShouldStoreResult()).isFalse();

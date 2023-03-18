@@ -23,7 +23,9 @@ import static org.springframework.util.CollectionUtils.*;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.elasticsearch.action.DocWriteRequest;
@@ -537,7 +539,7 @@ class RequestFactory {
 
 	public DeleteRequest deleteRequest(String id, @Nullable String routing, IndexCoordinates index) {
 		String indexName = index.getIndexName();
-		DeleteRequest deleteRequest = new DeleteRequest(indexName, id);
+		DeleteRequest deleteRequest = new DeleteRequest(indexName, index.getTypeName(), id);
 
 		if (routing != null) {
 			deleteRequest.routing(routing);
@@ -550,7 +552,7 @@ class RequestFactory {
 
 	// region get
 	public GetRequest getRequest(String id, @Nullable String routing, IndexCoordinates index) {
-		GetRequest getRequest = new GetRequest(index.getIndexName(), id);
+		GetRequest getRequest = new GetRequest(index.getIndexName(), index.getTypeName(), id);
 		getRequest.routing(routing);
 		return getRequest;
 	}
@@ -573,7 +575,7 @@ class RequestFactory {
 			String indexName = index.getIndexName();
 
 			for (Query.IdWithRouting idWithRouting : searchQuery.getIdsWithRouting()) {
-				MultiGetRequest.Item item = new MultiGetRequest.Item(indexName, idWithRouting.getId());
+				MultiGetRequest.Item item = new MultiGetRequest.Item(indexName, index.getTypeName(), idWithRouting.getId());
 				if (idWithRouting.getRouting() != null) {
 					item = item.routing(idWithRouting.getRouting());
 				}
@@ -603,13 +605,13 @@ class RequestFactory {
 			String id = StringUtils.isEmpty(query.getId()) ? getPersistentEntityId(queryObject) : query.getId();
 			// If we have a query id and a document id, do not ask ES to generate one.
 			if (id != null) {
-				indexRequest = new IndexRequest(indexName).id(id);
+				indexRequest = new IndexRequest(indexName, index.getTypeName()).id(id);
 			} else {
-				indexRequest = new IndexRequest(indexName);
+				indexRequest = new IndexRequest(indexName, index.getTypeName());
 			}
 			indexRequest.source(elasticsearchConverter.mapObject(queryObject).toJson(), Requests.INDEX_CONTENT_TYPE);
 		} else if (query.getSource() != null) {
-			indexRequest = new IndexRequest(indexName).id(query.getId()).source(query.getSource(),
+			indexRequest = new IndexRequest(indexName, index.getTypeName()).id(query.getId()).source(query.getSource(),
 					Requests.INDEX_CONTENT_TYPE);
 		} else {
 			throw new InvalidDataAccessApiUsageException(
@@ -685,7 +687,7 @@ class RequestFactory {
 	public MoreLikeThisQueryBuilder moreLikeThisQueryBuilder(MoreLikeThisQuery query, IndexCoordinates index) {
 
 		String indexName = index.getIndexName();
-		MoreLikeThisQueryBuilder.Item item = new MoreLikeThisQueryBuilder.Item(indexName, query.getId());
+		MoreLikeThisQueryBuilder.Item item = new MoreLikeThisQueryBuilder.Item(indexName, index.getTypeName(), query.getId());
 
 		String[] fields = query.getFields().toArray(new String[] {});
 
@@ -783,7 +785,7 @@ class RequestFactory {
 		}
 
 		if (!query.getFields().isEmpty()) {
-			query.getFields().forEach(sourceBuilder::fetchField);
+			query.getFields().forEach(sourceBuilder::storedField);
 		}
 
 		if (!isEmpty(query.getStoredFields())) {
@@ -823,8 +825,6 @@ class RequestFactory {
 
 		if (query.getTrackTotalHits() != null) {
 			sourceBuilder.trackTotalHits(query.getTrackTotalHits());
-		} else if (query.getTrackTotalHitsUpTo() != null) {
-			sourceBuilder.trackTotalHitsUpTo(query.getTrackTotalHitsUpTo());
 		}
 
 		if (StringUtils.hasLength(query.getRoute())) {
@@ -833,7 +833,7 @@ class RequestFactory {
 
 		Duration timeout = query.getTimeout();
 		if (timeout != null) {
-			sourceBuilder.timeout(new TimeValue(timeout.toMillis()));
+			sourceBuilder.timeout(new TimeValue(timeout.get(ChronoUnit.SECONDS), TimeUnit.SECONDS));
 		}
 
 		sourceBuilder.explain(query.getExplain());
@@ -848,14 +848,14 @@ class RequestFactory {
 			request.requestCache(query.getRequestCache());
 		}
 
-		if (!query.getRuntimeFields().isEmpty()) {
-
-			Map<String, Object> runtimeMappings = new HashMap<>();
-			query.getRuntimeFields().forEach(runtimeField -> {
-				runtimeMappings.put(runtimeField.getName(), runtimeField.getMapping());
-			});
-			sourceBuilder.runtimeMappings(runtimeMappings);
-		}
+//		if (!query.getRuntimeFields().isEmpty()) {
+//
+//			Map<String, Object> runtimeMappings = new HashMap<>();
+//			query.getRuntimeFields().forEach(runtimeField -> {
+//				runtimeMappings.put(runtimeField.getName(), runtimeField.getMapping());
+//			});
+//			sourceBuilder.runtimeMappings(runtimeMappings);
+//		}
 
 		if (query.getScrollTime() != null) {
 			request.scroll(TimeValue.timeValueMillis(query.getScrollTime().toMillis()));
@@ -1022,7 +1022,7 @@ class RequestFactory {
 	public UpdateRequest updateRequest(UpdateQuery query, IndexCoordinates index) {
 
 		String indexName = query.getIndexName() != null ? query.getIndexName() : index.getIndexName();
-		UpdateRequest updateRequest = new UpdateRequest(indexName, query.getId());
+		UpdateRequest updateRequest = new UpdateRequest(indexName, index.getTypeName(), query.getId());
 
 		if (query.getScript() != null) {
 			Map<String, Object> params = query.getParams();
@@ -1122,7 +1122,7 @@ class RequestFactory {
 		}
 
 		if (query.getMaxDocs() != null) {
-			updateByQueryRequest.setMaxDocs(query.getMaxDocs());
+			updateByQueryRequest.setSize(query.getMaxDocs());
 		}
 
 		if (query.getMaxRetries() != null) {

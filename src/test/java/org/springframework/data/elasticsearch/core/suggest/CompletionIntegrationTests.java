@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.search.suggest.SuggestBuilder;
 import org.elasticsearch.search.suggest.SuggestBuilders;
@@ -100,7 +101,8 @@ public abstract class CompletionIntegrationTests {
 		indexQueries.add(new AnnotatedCompletionEntityBuilder("4").name("Artur Konczak")
 				.suggest(new String[] { "Artur", "Konczak" }).buildIndex());
 
-		operations.bulkIndex(indexQueries, IndexCoordinates.of("test-index-annotated-completion"));
+		operations.bulkIndex(indexQueries,
+				IndexCoordinates.of("test-index-annotated-completion").withTypes("annotated-completion-type"));
 		operations.indexOps(AnnotatedCompletionEntity.class).refresh();
 	}
 
@@ -116,7 +118,8 @@ public abstract class CompletionIntegrationTests {
 		indexQueries.add(new AnnotatedCompletionEntityBuilder("4").name("Mewes Kochheim4")
 				.suggest(new String[] { "Mewes Kochheim4" }, Integer.MAX_VALUE).buildIndex());
 
-		operations.bulkIndex(indexQueries, IndexCoordinates.of("test-index-annotated-completion"));
+		operations.bulkIndex(indexQueries,
+				IndexCoordinates.of("test-index-annotated-completion").withTypes("annotated-completion-type"));
 		operations.indexOps(AnnotatedCompletionEntity.class).refresh();
 	}
 
@@ -140,6 +143,7 @@ public abstract class CompletionIntegrationTests {
 		// noinspection unchecked
 		List<CompletionSuggestion.Entry.Option<AnnotatedCompletionEntity>> options = ((CompletionSuggestion<AnnotatedCompletionEntity>) suggestion)
 				.getEntries().get(0).getOptions();
+
 		assertThat(options).hasSize(2);
 		assertThat(options.get(0).getText()).isIn("Marchand", "Mohsin");
 		assertThat(options.get(1).getText()).isIn("Marchand", "Mohsin");
@@ -161,6 +165,7 @@ public abstract class CompletionIntegrationTests {
 				.build();
 
 		SearchHits<AnnotatedCompletionEntity> searchHits = operations.search(query, AnnotatedCompletionEntity.class);
+
 
 		assertThat(searchHits.hasSuggest()).isTrue();
 		Suggest suggest = searchHits.getSuggest();
@@ -197,6 +202,7 @@ public abstract class CompletionIntegrationTests {
 		// noinspection unchecked
 		List<CompletionSuggestion.Entry.Option<AnnotatedCompletionEntity>> options = ((CompletionSuggestion<AnnotatedCompletionEntity>) suggestion)
 				.getEntries().get(0).getOptions();
+
 
 		assertThat(options).hasSize(4);
 		for (CompletionSuggestion.Entry.Option<AnnotatedCompletionEntity> option : options) {

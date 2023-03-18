@@ -18,7 +18,7 @@ package org.springframework.data.elasticsearch.core.aggregation;
 import static org.assertj.core.api.Assertions.*;
 import static org.elasticsearch.index.query.QueryBuilders.*;
 import static org.elasticsearch.search.aggregations.AggregationBuilders.*;
-import static org.elasticsearch.search.aggregations.PipelineAggregatorBuilders.*;
+import static org.elasticsearch.search.aggregations.pipeline.PipelineAggregatorBuilders.statsBucket;
 import static org.springframework.data.elasticsearch.annotations.FieldType.*;
 import static org.springframework.data.elasticsearch.annotations.FieldType.Integer;
 
@@ -29,9 +29,9 @@ import java.util.List;
 import org.elasticsearch.action.search.SearchType;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.pipeline.InternalStatsBucket;
-import org.elasticsearch.search.aggregations.pipeline.ParsedStatsBucket;
-import org.elasticsearch.search.aggregations.pipeline.StatsBucket;
+import org.elasticsearch.search.aggregations.pipeline.bucketmetrics.stats.InternalStatsBucket;
+import org.elasticsearch.search.aggregations.pipeline.bucketmetrics.stats.ParsedStatsBucket;
+import org.elasticsearch.search.aggregations.pipeline.bucketmetrics.stats.StatsBucket;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -95,7 +95,7 @@ public abstract class AggregationIntegrationTests {
 				.addAuthor(RIZWAN_IDREES).addPublishedYear(YEAR_2002).addPublishedYear(YEAR_2001).addPublishedYear(YEAR_2000)
 				.score(40).buildIndex();
 
-		IndexCoordinates index = IndexCoordinates.of(INDEX_NAME);
+		IndexCoordinates index = IndexCoordinates.of(INDEX_NAME).withTypes("article");
 		operations.index(article1, index);
 		operations.index(article2, index);
 		operations.index(article3, index);

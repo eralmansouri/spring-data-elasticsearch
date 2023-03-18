@@ -93,7 +93,7 @@ public class SearchAsYouTypeTests {
 
 		// when
 		Query query = new NativeSearchQuery(QueryBuilders.multiMatchQuery("test ", //
-				"suggest", "suggest._2gram", "suggest._3gram", "suggest._4gram").type(MultiMatchQueryBuilder.Type.BOOL_PREFIX));
+				"suggest", "suggest._2gram", "suggest._3gram", "suggest._4gram").type(MultiMatchQueryBuilder.Type.BEST_FIELDS));
 		IndexCoordinates index = IndexCoordinates.of("test-index-core-search-as-you-type");
 		List<SearchAsYouTypeEntity> result = operations.search(query, SearchAsYouTypeEntity.class, index) //
 				.getSearchHits() //
@@ -114,7 +114,7 @@ public class SearchAsYouTypeTests {
 
 		// when
 		Query query = new NativeSearchQuery(QueryBuilders.multiMatchQuery("5678 ", //
-				"suggest", "suggest._2gram", "suggest._3gram", "suggest._4gram").type(MultiMatchQueryBuilder.Type.BOOL_PREFIX));
+				"suggest", "suggest._2gram", "suggest._3gram", "suggest._4gram").type(MultiMatchQueryBuilder.Type.BEST_FIELDS));
 		IndexCoordinates index = IndexCoordinates.of("test-index-core-search-as-you-type");
 		List<SearchAsYouTypeEntity> result = operations.search(query, SearchAsYouTypeEntity.class, index) //
 				.getSearchHits() //
@@ -135,7 +135,7 @@ public class SearchAsYouTypeTests {
 
 		// when
 		Query query = new NativeSearchQuery(QueryBuilders.multiMatchQuery("n mat", //
-				"suggest", "suggest._2gram", "suggest._3gram", "suggest._4gram").type(MultiMatchQueryBuilder.Type.BOOL_PREFIX));
+				"suggest", "suggest._2gram", "suggest._3gram", "suggest._4gram").type(MultiMatchQueryBuilder.Type.BEST_FIELDS));
 		IndexCoordinates index = IndexCoordinates.of("test-index-core-search-as-you-type");
 		List<SearchAsYouTypeEntity> result = operations.search(query, SearchAsYouTypeEntity.class, index) //
 				.getSearchHits() //

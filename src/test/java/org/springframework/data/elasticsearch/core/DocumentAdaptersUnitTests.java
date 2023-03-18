@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.assertj.core.data.Offset;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.common.bytes.BytesArray;
 import org.elasticsearch.common.document.DocumentField;
@@ -54,7 +55,7 @@ public class DocumentAdaptersUnitTests {
 		Map<String, DocumentField> fields = Collections.singletonMap("field",
 				new DocumentField("field", Collections.singletonList("value")));
 
-		GetResult getResult = new GetResult("index", "type", "my-id", 1, 2, 42, true, null, fields, null);
+		GetResult getResult = new GetResult("index", "type", "my-id", 1, 2, 42, true, null, fields);
 		GetResponse response = new GetResponse(getResult);
 
 		Document document = DocumentAdapters.from(response);
@@ -76,7 +77,7 @@ public class DocumentAdaptersUnitTests {
 
 		BytesArray source = new BytesArray("{\"field\":\"value\"}");
 
-		GetResult getResult = new GetResult("index", "type", "my-id", 1, 2, 42, true, source, Collections.emptyMap(), null);
+		GetResult getResult = new GetResult("index", "type", "my-id", 1, 2, 42, true, source, Collections.emptyMap());
 		GetResponse response = new GetResponse(getResult);
 
 		Document document = DocumentAdapters.from(response);
@@ -99,7 +100,7 @@ public class DocumentAdaptersUnitTests {
 		Map<String, DocumentField> fields = Collections.singletonMap("field",
 				new DocumentField("field", Collections.singletonList("value")));
 
-		GetResult getResult = new GetResult("index", "type", "my-id", 1, 2, 42, true, null, fields, null);
+		GetResult getResult = new GetResult("index", "type", "my-id", 1, 2, 42, true, null, fields);
 
 		Document document = DocumentAdapters.from(getResult);
 
@@ -120,7 +121,7 @@ public class DocumentAdaptersUnitTests {
 
 		BytesArray source = new BytesArray("{\"field\":\"value\"}");
 
-		GetResult getResult = new GetResult("index", "type", "my-id", 1, 2, 42, true, source, Collections.emptyMap(), null);
+		GetResult getResult = new GetResult("index", "type", "my-id", 1, 2, 42, true, source, Collections.emptyMap());
 
 		Document document = DocumentAdapters.from(getResult);
 
@@ -142,7 +143,7 @@ public class DocumentAdaptersUnitTests {
 		Map<String, DocumentField> fields = Collections.singletonMap("field",
 				new DocumentField("field", Collections.singletonList("value")));
 
-		SearchShardTarget shard = new SearchShardTarget("node", new ShardId("index", "uuid", 42), null);
+		SearchShardTarget shard = new SearchShardTarget("node", new ShardId("index", "uuid", 42), null, null);
 		SearchHit searchHit = new SearchHit(123, "my-id", new Text("type"), null, fields);
 		searchHit.shard(shard);
 		searchHit.setSeqNo(1);
@@ -171,7 +172,7 @@ public class DocumentAdaptersUnitTests {
 		fields.put("string", new DocumentField("string", Collections.singletonList("value")));
 		fields.put("bool", new DocumentField("bool", Arrays.asList(true, true, false)));
 
-		SearchHit searchHit = new SearchHit(123, "my-id", new Text("type"), fields, null);
+		SearchHit searchHit = new SearchHit(123, "my-id", new Text("type"), fields);
 
 		SearchDocument document = DocumentAdapters.from(searchHit);
 
@@ -188,7 +189,7 @@ public class DocumentAdaptersUnitTests {
 		fields.put("bool", new DocumentField("bool", Arrays.asList(true, true, false)));
 		fields.put("null", new DocumentField("null", Collections.emptyList()));
 
-		SearchHit searchHit = new SearchHit(123, "my-id", new Text("type"), fields, null);
+		SearchHit searchHit = new SearchHit(123, "my-id", new Text("type"), fields);
 
 		SearchDocument document = DocumentAdapters.from(searchHit);
 
@@ -205,7 +206,7 @@ public class DocumentAdaptersUnitTests {
 		fields.put("string", new DocumentField("string", Collections.singletonList("value")));
 		fields.put("bool", new DocumentField("bool", Arrays.asList(true, true, false)));
 
-		SearchHit searchHit = new SearchHit(123, "my-id", new Text("type"), fields, null);
+		SearchHit searchHit = new SearchHit(123, "my-id", new Text("type"), fields);
 
 		SearchDocument document = DocumentAdapters.from(searchHit);
 
@@ -217,7 +218,7 @@ public class DocumentAdaptersUnitTests {
 
 		BytesArray source = new BytesArray("{\"field\":\"value\"}");
 
-		SearchShardTarget shard = new SearchShardTarget("node", new ShardId("index", "uuid", 42), null);
+		SearchShardTarget shard = new SearchShardTarget("node", new ShardId("index", "uuid", 42), null, null);
 		SearchHit searchHit = new SearchHit(123, "my-id", new Text("type"), null, null);
 		searchHit.shard(shard);
 		searchHit.sourceRef(source).score(42);
@@ -244,9 +245,9 @@ public class DocumentAdaptersUnitTests {
 	@DisplayName("should adapt returned explanations")
 	void shouldAdaptReturnedExplanations() {
 
-		SearchHit searchHit = new SearchHit(42);
+		SearchHit searchHit = new SearchHit(42, null, null, Collections.emptyMap());
 		searchHit.explanation(org.apache.lucene.search.Explanation.match( //
-				3.14, //
+				3.14f, //
 				"explanation 3.14", //
 				Collections.singletonList(org.apache.lucene.search.Explanation.noMatch( //
 						"explanation noMatch", //
@@ -257,7 +258,7 @@ public class DocumentAdaptersUnitTests {
 		Explanation explanation = searchDocument.getExplanation();
 		assertThat(explanation).isNotNull();
 		assertThat(explanation.isMatch()).isTrue();
-		assertThat(explanation.getValue()).isEqualTo(3.14);
+		assertThat(explanation.getValue()).isEqualTo(3.14, Offset.offset(0.005));
 		assertThat(explanation.getDescription()).isEqualTo("explanation 3.14");
 		List<Explanation> details = explanation.getDetails();
 		assertThat(details).containsExactly(new Explanation(false, 0.0, "explanation noMatch", Collections.emptyList()));
@@ -266,7 +267,7 @@ public class DocumentAdaptersUnitTests {
 	@Test // DATAES-979
 	@DisplayName("should adapt returned matched queries")
 	void shouldAdaptReturnedMatchedQueries() {
-		SearchHit searchHit = new SearchHit(42);
+		SearchHit searchHit = new SearchHit(42, null, null, Collections.emptyMap());
 		searchHit.matchedQueries(new String[] { "query1", "query2" });
 
 		SearchDocument searchDocument = DocumentAdapters.from(searchHit);

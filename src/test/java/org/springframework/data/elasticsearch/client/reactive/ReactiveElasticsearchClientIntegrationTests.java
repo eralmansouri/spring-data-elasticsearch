@@ -17,6 +17,7 @@ package org.springframework.data.elasticsearch.client.reactive;
 
 import static org.assertj.core.api.Assertions.*;
 
+import org.elasticsearch.common.unit.TimeValue;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -41,7 +42,6 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.GetMappingsRequest;
-import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryRequest;
@@ -163,7 +163,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 	@Test // DATAES-519, DATAES-822
 	public void getOnNonExistingIndexShouldThrowException() {
 
-		client.get(new GetRequest(INDEX_I, "nonono")) //
+		client.get(new GetRequest(INDEX_I,"_doc", "nonono")) //
 				.as(StepVerifier::create) //
 				.expectError(RestStatusException.class) //
 				.verify();
@@ -174,7 +174,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 
 		String id = addSourceDocument().to(INDEX_I);
 
-		client.get(new GetRequest(INDEX_I, id)) //
+		client.get(new GetRequest(INDEX_I, "_doc", id)) //
 				.as(StepVerifier::create) //
 				.consumeNextWith(it -> {
 
@@ -190,7 +190,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 		addSourceDocument().to(INDEX_I);
 
 		String id = "this-one-does-not-exist";
-		client.get(new GetRequest(INDEX_I, id)) //
+		client.get(new GetRequest(INDEX_I, "_doc", id)) //
 				.as(StepVerifier::create) //
 				.verifyComplete();
 	}
@@ -202,8 +202,8 @@ public class ReactiveElasticsearchClientIntegrationTests {
 		String id2 = addSourceDocument().to(INDEX_I);
 
 		MultiGetRequest request = new MultiGetRequest() //
-				.add(INDEX_I, id1) //
-				.add(INDEX_I, id2);
+				.add(INDEX_I, "_doc",id1) //
+				.add(INDEX_I, "_doc",id2);
 
 		client.multiGet(request) //
 				.as(StepVerifier::create) //
@@ -225,8 +225,8 @@ public class ReactiveElasticsearchClientIntegrationTests {
 		addSourceDocument().to(INDEX_I);
 
 		MultiGetRequest request = new MultiGetRequest() //
-				.add(INDEX_I, id1) //
-				.add(INDEX_I, "this-one-does-not-exist");
+				.add(INDEX_I, "_doc",id1) //
+				.add(INDEX_I, "_doc","this-one-does-not-exist");
 
 		client.multiGet(request) //
 				.as(StepVerifier::create) //
@@ -249,9 +249,9 @@ public class ReactiveElasticsearchClientIntegrationTests {
 		String id2 = addSourceDocument().to(INDEX_I);
 
 		MultiGetRequest request = new MultiGetRequest() //
-				.add(INDEX_I, id1) //
-				.add(INDEX_I, "this-one-does-not-exist") //
-				.add(INDEX_I, id2); //
+				.add(INDEX_I,"_doc", id1) //
+				.add(INDEX_I,"_doc", "this-one-does-not-exist") //
+				.add(INDEX_I,"_doc", id2); //
 
 		client.multiGet(request) //
 				.as(StepVerifier::create) //
@@ -279,7 +279,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 		String id2 = addSourceDocument().to(INDEX_I);
 
 		client.multiGet(new MultiGetRequest() //
-				.add(INDEX_II, id1).add(INDEX_II, id2)) //
+				.add(INDEX_II, "_doc",id1).add(INDEX_II, "_doc",id2)) //
 				.as(StepVerifier::create) //
 				.consumeNextWith(it -> assertThat(it.isFailed()).isTrue()) //
 				.consumeNextWith(it -> assertThat(it.isFailed()).isTrue()) //
@@ -293,8 +293,8 @@ public class ReactiveElasticsearchClientIntegrationTests {
 		String id2 = addSourceDocument().to(INDEX_II);
 
 		MultiGetRequest request = new MultiGetRequest() //
-				.add(INDEX_I, id1) //
-				.add(INDEX_II, id2);
+				.add(INDEX_I, "_doc",id1) //
+				.add(INDEX_II,"_doc", id2);
 
 		client.multiGet(request) //
 				.as(StepVerifier::create) //
@@ -314,7 +314,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 
 		String id = addSourceDocument().to(INDEX_I);
 
-		client.exists(new GetRequest(INDEX_I, id)) //
+		client.exists(new GetRequest(INDEX_I,"_doc", id)) //
 				.as(StepVerifier::create) //
 				.expectNext(true)//
 				.verifyComplete();
@@ -325,7 +325,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 
 		String id = addSourceDocument().to(INDEX_I);
 
-		client.exists(new GetRequest(INDEX_II, id)) //
+		client.exists(new GetRequest(INDEX_II, "_doc",id)) //
 				.as(StepVerifier::create) //
 				.expectNext(false)//
 				.verifyComplete();
@@ -363,7 +363,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 	public void updateShouldUpsertNonExistingDocumentWhenUsedWithUpsert() {
 
 		String id = UUID.randomUUID().toString();
-		UpdateRequest request = new UpdateRequest(INDEX_I, id) //
+		UpdateRequest request = new UpdateRequest(INDEX_I,"_doc", id) //
 				.doc(DOC_SOURCE) //
 				.docAsUpsert(true);
 
@@ -382,7 +382,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 
 		String id = addSourceDocument().to(INDEX_I);
 
-		UpdateRequest request = new UpdateRequest(INDEX_I, id) //
+		UpdateRequest request = new UpdateRequest(INDEX_I,"_doc", id) //
 				.doc(Collections.singletonMap("dutiful", "farseer"));
 
 		client.update(request) //
@@ -400,7 +400,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 	public void updateShouldErrorNonExistingDocumentWhenNotUpserted() {
 
 		String id = UUID.randomUUID().toString();
-		UpdateRequest request = new UpdateRequest(INDEX_I, id) //
+		UpdateRequest request = new UpdateRequest(INDEX_I,"_doc", id) //
 				.doc(DOC_SOURCE);
 
 		client.update(request) //
@@ -413,7 +413,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 
 		String id = addSourceDocument().to(INDEX_I);
 
-		DeleteRequest request = new DeleteRequest(INDEX_I, id);
+		DeleteRequest request = new DeleteRequest(INDEX_I,"_doc", id);
 
 		client.delete(request) //
 				.as(StepVerifier::create) //
@@ -426,7 +426,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 
 		addSourceDocument().to(INDEX_I);
 
-		DeleteRequest request = new DeleteRequest(INDEX_I, "this-one-does-not-exist");
+		DeleteRequest request = new DeleteRequest(INDEX_I,"_doc", "this-one-does-not-exist");
 
 		client.delete(request) //
 				.as(StepVerifier::create) //
@@ -962,9 +962,9 @@ public class ReactiveElasticsearchClientIntegrationTests {
 		String idFirstDoc = addSourceDocument().to(INDEX_I);
 		String idSecondDoc = addSourceDocument().to(INDEX_I);
 
-		UpdateRequest requestFirstDoc = new UpdateRequest(INDEX_I, idFirstDoc) //
+		UpdateRequest requestFirstDoc = new UpdateRequest(INDEX_I, "_doc",idFirstDoc) //
 				.doc(Collections.singletonMap("dutiful", "farseer"));
-		UpdateRequest requestSecondDoc = new UpdateRequest(INDEX_I, idSecondDoc) //
+		UpdateRequest requestSecondDoc = new UpdateRequest(INDEX_I, "_doc",idSecondDoc) //
 				.doc(Collections.singletonMap("secondDocUpdate", "secondDocUpdatePartTwo"));
 
 		BulkRequest bulkRequest = new BulkRequest();
@@ -1090,7 +1090,7 @@ public class ReactiveElasticsearchClientIntegrationTests {
 
 		client.searchForResponse(request) //
 				.as(StepVerifier::create) //
-				.consumeNextWith(searchResponse -> assertThat(searchResponse.getHits().getTotalHits().value).isEqualTo(2))
+				.consumeNextWith(searchResponse -> assertThat(searchResponse.getHits().getTotalHits()).isEqualTo(2))
 				.verifyComplete();
 	}
 

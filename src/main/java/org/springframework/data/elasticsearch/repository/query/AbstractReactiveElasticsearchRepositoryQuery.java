@@ -91,7 +91,8 @@ abstract class AbstractReactiveElasticsearchRepositoryQuery implements Repositor
 
 		Class<?> targetType = processor.getReturnedType().getTypeToRead();
 		String indexName = queryMethod.getEntityInformation().getIndexName();
-		IndexCoordinates index = IndexCoordinates.of(indexName);
+		String indexTypeName = "_doc";
+		IndexCoordinates index = IndexCoordinates.of(indexName).withTypes(indexTypeName);
 
 		ReactiveElasticsearchQueryExecution execution = getExecution(parameterAccessor,
 				new ResultProcessingConverter(processor));

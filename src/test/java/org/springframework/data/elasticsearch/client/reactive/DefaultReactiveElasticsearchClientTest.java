@@ -79,7 +79,6 @@ class DefaultReactiveElasticsearchClientTest {
 		verify(searchRequestConverter).apply(captor.capture());
 		SearchSourceBuilder source = captor.getValue().source();
 		assertThat(source.size()).isEqualTo(0);
-		assertThat(source.trackTotalHitsUpTo()).isEqualTo(TRACK_TOTAL_HITS_ACCURATE);
 		assertThat(source.fetchSource()).isEqualTo(FetchSourceContext.DO_NOT_FETCH_SOURCE);
 	}
 

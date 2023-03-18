@@ -25,13 +25,13 @@ import java.util.Map;
 
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.unit.Fuzziness;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.search.suggest.SuggestBuilder;
 import org.elasticsearch.search.suggest.SuggestBuilders;
 import org.elasticsearch.search.suggest.SuggestionBuilder;
 import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
 import org.elasticsearch.search.suggest.completion.CompletionSuggestionBuilder;
 import org.elasticsearch.search.suggest.completion.context.CategoryQueryContext;
-import org.elasticsearch.xcontent.ToXContent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -100,7 +100,8 @@ public abstract class CompletionWithContextsIntegrationTests {
 		indexQueries.add(new ContextCompletionEntityBuilder("4").name("Artur Konczak")
 				.suggest(new String[] { "Artur", "Konczak" }, context4).buildIndex());
 
-		operations.bulkIndex(indexQueries, IndexCoordinates.of("test-index-context-completion"));
+		operations.bulkIndex(indexQueries,
+				IndexCoordinates.of("test-index-context-completion").withTypes("context-completion-type"));
 		operations.indexOps(ContextCompletionEntity.class).refresh();
 	}
 
@@ -126,7 +127,7 @@ public abstract class CompletionWithContextsIntegrationTests {
 		// when
 		SearchResponse suggestResponse = ((AbstractElasticsearchTemplate) operations).suggest(
 				new SuggestBuilder().addSuggestion("test-suggest", completionSuggestionFuzzyBuilder),
-				IndexCoordinates.of("test-index-context-completion"));
+				IndexCoordinates.of("test-index-context-completion").withTypes("context-completion-type"));
 		assertThat(suggestResponse.getSuggest()).isNotNull();
 		CompletionSuggestion completionSuggestion = suggestResponse.getSuggest().getSuggestion("test-suggest");
 		List<CompletionSuggestion.Entry.Option> options = completionSuggestion.getEntries().get(0).getOptions();
@@ -158,7 +159,7 @@ public abstract class CompletionWithContextsIntegrationTests {
 		// when
 		SearchResponse suggestResponse = ((AbstractElasticsearchTemplate) operations).suggest(
 				new SuggestBuilder().addSuggestion("test-suggest", completionSuggestionFuzzyBuilder),
-				IndexCoordinates.of("test-index-context-completion"));
+				IndexCoordinates.of("test-index-context-completion").withTypes("context-completion-type"));
 		assertThat(suggestResponse.getSuggest()).isNotNull();
 		CompletionSuggestion completionSuggestion = suggestResponse.getSuggest().getSuggestion("test-suggest");
 		List<CompletionSuggestion.Entry.Option> options = completionSuggestion.getEntries().get(0).getOptions();
@@ -190,7 +191,7 @@ public abstract class CompletionWithContextsIntegrationTests {
 		// when
 		SearchResponse suggestResponse = ((AbstractElasticsearchTemplate) operations).suggest(
 				new SuggestBuilder().addSuggestion("test-suggest", completionSuggestionFuzzyBuilder),
-				IndexCoordinates.of("test-index-context-completion"));
+				IndexCoordinates.of("test-index-context-completion").withTypes("context-completion-type"));
 		assertThat(suggestResponse.getSuggest()).isNotNull();
 		CompletionSuggestion completionSuggestion = suggestResponse.getSuggest().getSuggestion("test-suggest");
 		List<CompletionSuggestion.Entry.Option> options = completionSuggestion.getEntries().get(0).getOptions();

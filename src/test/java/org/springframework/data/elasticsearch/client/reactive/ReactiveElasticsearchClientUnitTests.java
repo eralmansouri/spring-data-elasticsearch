@@ -19,6 +19,9 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.elasticsearch.client.reactive.ReactiveMockClientTestsUtils.MockWebClientProvider.Receive.*;
 
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.search.aggregations.metrics.max.ParsedMax;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
@@ -35,12 +38,9 @@ import org.elasticsearch.action.get.MultiGetRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.update.UpdateRequest;
-import org.elasticsearch.core.TimeValue;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
-import org.elasticsearch.search.aggregations.metrics.ParsedMax;
-import org.elasticsearch.xcontent.XContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -184,7 +184,7 @@ public class ReactiveElasticsearchClientUnitTests {
 
 		verify(hostProvider.client(HOST)).method(HttpMethod.GET);
 		URI uri = hostProvider.when(HOST).captureUri();
-		assertThat(uri.getRawPath()).isEqualTo("/twitter/_doc/1");
+		assertThat(uri.getRawPath()).isEqualTo("/twitter/_all/1");
 	}
 
 	@Test // DATAES-488
@@ -248,7 +248,7 @@ public class ReactiveElasticsearchClientUnitTests {
 		hostProvider.when(HOST) //
 				.receiveJsonFromFile("multi-get-ok-2-hits");
 
-		client.multiGet(new MultiGetRequest().add("twitter", "1").add("twitter", "2")) //
+		client.multiGet(new MultiGetRequest().add("twitter", "_doc", "1").add("twitter", "_doc", "2")) //
 				.as(StepVerifier::create) //
 				.consumeNextWith(result -> {
 
@@ -280,9 +280,9 @@ public class ReactiveElasticsearchClientUnitTests {
 				.receiveJsonFromFile("multi-get-ok-2-hits-1-unavailable");
 
 		client.multiGet(new MultiGetRequest() //
-				.add("twitter", "1") //
-				.add("twitter", "2") //
-				.add("twitter", "3") //
+				.add("twitter", "_doc", "1") //
+				.add("twitter", "_doc","2") //
+				.add("twitter", "_doc","3") //
 		) //
 				.as(StepVerifier::create) //
 				.consumeNextWith(result -> {
@@ -331,7 +331,7 @@ public class ReactiveElasticsearchClientUnitTests {
 		verify(hostProvider.client(HOST)).method(HttpMethod.HEAD);
 
 		URI uri = hostProvider.when(HOST).captureUri();
-		assertThat(uri.getRawPath()).isEqualTo("/twitter/_doc/1");
+		assertThat(uri.getRawPath()).isEqualTo("/twitter/_all/1");
 	}
 
 	@Test // DATAES-488
@@ -375,7 +375,7 @@ public class ReactiveElasticsearchClientUnitTests {
 		});
 
 		URI uri = hostProvider.when(HOST).captureUri();
-		assertThat(uri.getRawPath()).isEqualTo("/twitter/_doc/10/_create");
+		assertThat(uri.getRawPath()).isEqualTo("/twitter/10/_create");
 	}
 
 	@Test // DATAES-488
@@ -394,7 +394,7 @@ public class ReactiveElasticsearchClientUnitTests {
 		});
 
 		URI uri = hostProvider.when(HOST).captureUri();
-		assertThat(uri.getRawPath()).isEqualTo("/twitter/_doc/10");
+		assertThat(uri.getRawPath()).isEqualTo("/twitter/10");
 	}
 
 	@Test // DATAES-488
@@ -476,7 +476,7 @@ public class ReactiveElasticsearchClientUnitTests {
 		hostProvider.when(HOST) //
 				.updateFail();
 
-		client.update(new UpdateRequest("twitter", "1").doc(Collections.singletonMap("user", "cstrobl")))
+		client.update(new UpdateRequest("twitter","_doc", "1").doc(Collections.singletonMap("user", "cstrobl")))
 				.as(StepVerifier::create) //
 				.expectError(RestStatusException.class) //
 				.verify();

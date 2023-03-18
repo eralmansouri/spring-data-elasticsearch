@@ -100,8 +100,8 @@ class ElasticsearchRestTemplateCallbackTests extends ElasticsearchTemplateCallba
 		}).when(searchHit).getSourceAsMap();
 
 		MultiSearchResponse multiSearchResponse = new MultiSearchResponse(
-				new MultiSearchResponse.Item[] { multiSearchResponseItem }, 1L);
-		doReturn(multiSearchResponse).when(client).multiSearch(any(MultiSearchRequest.class), any());
+				new MultiSearchResponse.Item[] { multiSearchResponseItem });
+		doReturn(multiSearchResponse).when(client).multiSearch(any(MultiSearchRequest.class), any(RequestOptions.class));
 		doReturn(multiSearchResponse).when(client).msearch(any(MultiSearchRequest.class), any());
 		doReturn(searchResponse).when(multiSearchResponseItem).getResponse();
 

@@ -102,6 +102,7 @@ public abstract class DynamicSettingAndMappingEntityRepositoryIntegrationTests {
 				"{\"term\": {\"email\": \"" + dynamicSettingAndMappingEntity1.getEmail() + "\"}}\n");
 
 		IndexCoordinates index = IndexCoordinates.of(indexNameProvider.indexName());
+
 		SearchHits<DynamicSettingAndMappingEntity> entityList = operations.search(searchQuery,
 				DynamicSettingAndMappingEntity.class, index);
 

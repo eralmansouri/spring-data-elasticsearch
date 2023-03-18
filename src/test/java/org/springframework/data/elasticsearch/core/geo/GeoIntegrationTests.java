@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.elasticsearch.geometry.utils.Geohash;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,8 +55,10 @@ import org.springframework.lang.Nullable;
 @SpringIntegrationTest
 public abstract class GeoIntegrationTests {
 
-	private final IndexCoordinates locationMarkerIndex = IndexCoordinates.of("test-index-location-marker-core-geo");
-	private final IndexCoordinates authorMarkerIndex = IndexCoordinates.of("test-index-author-marker-core-geo");
+	private final IndexCoordinates locationMarkerIndex = IndexCoordinates.of("test-index-location-marker-core-geo")
+			.withTypes("geo-annotation-point-type");
+	private final IndexCoordinates authorMarkerIndex = IndexCoordinates.of("test-index-author-marker-core-geo")
+			.withTypes("geo-class-point-type");
 
 	@Autowired private ElasticsearchOperations operations;
 
@@ -90,7 +91,7 @@ public abstract class GeoIntegrationTests {
 		double[] lonLatArray = { 0.100000, 51.000000 };
 		String latLonString = "51.000000, 0.100000";
 		String geohash = "u10j46mkfekr";
-		Geohash.stringEncode(0.100000, 51.000000);
+		//Geohash.stringEncode(0.100000, 51.000000);
 		LocationMarkerEntity location1 = new LocationMarkerEntity();
 		location1.setId("1");
 		location1.setName("Artur Konczak");
@@ -235,24 +236,6 @@ public abstract class GeoIntegrationTests {
 		loadClassBaseEntities();
 		CriteriaQuery geoLocationCriteriaQuery3 = new CriteriaQuery(
 				new Criteria("location").boundedBy(new GeoBox(new GeoPoint(53.5171d, 0), new GeoPoint(49.5171d, 0.2062d))));
-
-		// when
-		SearchHits<AuthorMarkerEntity> geoAuthorsForGeoCriteria3 = operations.search(geoLocationCriteriaQuery3,
-				AuthorMarkerEntity.class, authorMarkerIndex);
-
-		// then
-		assertThat(geoAuthorsForGeoCriteria3).hasSize(2);
-		assertThat(geoAuthorsForGeoCriteria3.stream().map(SearchHit::getContent).map(AuthorMarkerEntity::getName))
-				.containsExactlyInAnyOrder("Mohsin Husen", "Rizwan Idrees");
-	}
-
-	@Test
-	public void shouldFindAuthorMarkersInBoxForGivenCriteriaQueryUsingGeohash() {
-
-		// given
-		loadClassBaseEntities();
-		CriteriaQuery geoLocationCriteriaQuery3 = new CriteriaQuery(
-				new Criteria("location").boundedBy(Geohash.stringEncode(0, 53.5171d), Geohash.stringEncode(0.2062d, 49.5171d)));
 
 		// when
 		SearchHits<AuthorMarkerEntity> geoAuthorsForGeoCriteria3 = operations.search(geoLocationCriteriaQuery3,

@@ -24,7 +24,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.apache.lucene.search.TotalHits;
 import org.elasticsearch.action.search.SearchResponse;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -68,7 +67,7 @@ abstract class ElasticsearchTemplateCallbackTests {
 	protected final org.elasticsearch.search.SearchHits nSearchHits(int count) {
 		org.elasticsearch.search.SearchHit[] hits = new org.elasticsearch.search.SearchHit[count];
 		Arrays.fill(hits, searchHit);
-		return new org.elasticsearch.search.SearchHits(hits, new TotalHits(count, TotalHits.Relation.EQUAL_TO), 1.0f);
+		return new org.elasticsearch.search.SearchHits(hits, count, 1.0f);
 	}
 
 	@Test // DATAES-771

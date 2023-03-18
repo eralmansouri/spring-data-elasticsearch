@@ -40,6 +40,7 @@ import org.elasticsearch.action.admin.cluster.storedscripts.GetStoredScriptReque
 import org.elasticsearch.action.admin.cluster.storedscripts.PutStoredScriptRequest;
 import org.elasticsearch.action.admin.indices.alias.IndicesAliasesRequest;
 import org.elasticsearch.action.admin.indices.alias.get.GetAliasesRequest;
+import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequest;
 import org.elasticsearch.action.admin.indices.close.CloseIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -70,7 +71,6 @@ import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.client.RethrottleRequest;
 import org.elasticsearch.client.core.CountRequest;
-import org.elasticsearch.client.indices.AnalyzeRequest;
 import org.elasticsearch.client.indices.GetFieldMappingsRequest;
 import org.elasticsearch.client.indices.GetIndexTemplatesRequest;
 import org.elasticsearch.client.indices.IndexTemplatesExistRequest;
@@ -78,11 +78,19 @@ import org.elasticsearch.client.indices.PutIndexTemplateRequest;
 import org.elasticsearch.cluster.health.ClusterHealthStatus;
 import org.elasticsearch.common.Priority;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.SuppressForbidden;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.lucene.uid.Versions;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.DeprecationHandler;
+import org.elasticsearch.common.xcontent.NamedXContentRegistry;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.ToXContentObject;
+import org.elasticsearch.common.xcontent.XContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentHelper;
-import org.elasticsearch.core.SuppressForbidden;
-import org.elasticsearch.core.TimeValue;
+import org.elasticsearch.common.xcontent.XContentParser;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.index.rankeval.RankEvalRequest;
@@ -94,13 +102,6 @@ import org.elasticsearch.index.seqno.SequenceNumbers;
 import org.elasticsearch.script.mustache.SearchTemplateRequest;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 import org.elasticsearch.tasks.TaskId;
-import org.elasticsearch.xcontent.DeprecationHandler;
-import org.elasticsearch.xcontent.NamedXContentRegistry;
-import org.elasticsearch.xcontent.ToXContent;
-import org.elasticsearch.xcontent.XContent;
-import org.elasticsearch.xcontent.XContentBuilder;
-import org.elasticsearch.xcontent.XContentParser;
-import org.elasticsearch.xcontent.XContentType;
 import org.springframework.data.elasticsearch.client.reactive.ReactiveElasticsearchClient;
 import org.springframework.http.HttpMethod;
 import org.springframework.lang.Nullable;
@@ -136,7 +137,7 @@ public class RequestConverters {
 
 		Params parameters = new Params(request);
 		parameters.withRouting(deleteRequest.routing());
-		parameters.withTimeout(deleteRequest.timeout());
+		parameters.withTimeout(new TimeValue(deleteRequest.timeout().duration(), deleteRequest.timeout().timeUnit()));
 		parameters.withVersion(deleteRequest.version());
 		parameters.withVersionType(deleteRequest.versionType());
 		parameters.withIfSeqNo(deleteRequest.ifSeqNo());
@@ -547,18 +548,14 @@ public class RequestConverters {
 				.withTimeout(reindexRequest.getTimeout()).withWaitForActiveShards(reindexRequest.getWaitForActiveShards())
 				.withRequestsPerSecond(reindexRequest.getRequestsPerSecond());
 
-		if (reindexRequest.getDestination().isRequireAlias()) {
-			params.putParam("require_alias", Boolean.TRUE.toString());
-		}
-
 		if (reindexRequest.getScrollTime() != null) {
 			params.putParam("scroll", reindexRequest.getScrollTime());
 		}
 
 		params.putParam("slices", Integer.toString(reindexRequest.getSlices()));
 
-		if (reindexRequest.getMaxDocs() > -1) {
-			params.putParam("max_docs", Integer.toString(reindexRequest.getMaxDocs()));
+		if (reindexRequest.getSize() > -1) {
+			params.putParam("size", Integer.toString(reindexRequest.getSize()));
 		}
 		request.setEntity(createEntity(reindexRequest, REQUEST_BODY_CONTENT_TYPE));
 		return request;
@@ -587,8 +584,8 @@ public class RequestConverters {
 			params.putParam("scroll", updateByQueryRequest.getScrollTime());
 		}
 
-		if (updateByQueryRequest.getMaxDocs() > 0) {
-			params.putParam("max_docs", Integer.toString(updateByQueryRequest.getMaxDocs()));
+		if (updateByQueryRequest.getSize() > 0) {
+			params.putParam("size", Integer.toString(updateByQueryRequest.getSize()));
 		}
 
 		request.setEntity(createEntity(updateByQueryRequest, REQUEST_BODY_CONTENT_TYPE));

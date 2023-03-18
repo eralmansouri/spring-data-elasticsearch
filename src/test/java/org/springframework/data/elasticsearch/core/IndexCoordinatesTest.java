@@ -39,4 +39,11 @@ class IndexCoordinatesTest {
 	void cannotBeInitializedWithEmptyIndexNames() {
 		assertThatThrownBy(() -> IndexCoordinates.of(new String[] {})).isInstanceOf(IllegalArgumentException.class);
 	}
+
+	@Test
+	void shouldHaveEmptyTypesWhenNotSet() {
+		IndexCoordinates indexCoordinates = IndexCoordinates.of("test");
+
+		assertThat(indexCoordinates.getTypeNames()).isEmpty();
+	}
 }

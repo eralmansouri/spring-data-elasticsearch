@@ -15,6 +15,9 @@
  */
 package org.springframework.data.elasticsearch.core.mapping;
 
+import static org.springframework.util.StringUtils.*;
+
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -69,6 +72,15 @@ public class SimpleElasticsearchPersistentEntity<T> extends BasicPersistentEntit
 	private @Nullable final Document document;
 	private @Nullable String indexName;
 	private final Lazy<SettingsParameter> settingsParameter;
+	private @Nullable String indexType;
+	private boolean useServerConfiguration;
+	private short shards;
+	private short replicas;
+	private @Nullable String refreshInterval;
+	private @Nullable String indexStoreType;
+	private @Nullable String parentType;
+	private @Nullable ElasticsearchPersistentProperty parentIdProperty;
+	private @Nullable ElasticsearchPersistentProperty scoreProperty;
 	private @Nullable ElasticsearchPersistentProperty seqNoPrimaryTermProperty;
 	private @Nullable ElasticsearchPersistentProperty joinFieldProperty;
 	private @Nullable Document.VersionType versionType;
@@ -101,6 +113,7 @@ public class SimpleElasticsearchPersistentEntity<T> extends BasicPersistentEntit
 			Assert.hasText(document.indexName(),
 					" Unknown indexName. Make sure the indexName is defined. e.g @Document(indexName=\"foo\")");
 			this.indexName = document.indexName();
+			this.indexType = hasText(document.type()) ? document.type() : clazz.getSimpleName().toLowerCase(Locale.ENGLISH);
 			this.versionType = document.versionType();
 			this.createIndexAndMapping = document.createIndex();
 			this.dynamic = document.dynamic();
@@ -121,9 +134,27 @@ public class SimpleElasticsearchPersistentEntity<T> extends BasicPersistentEntit
 		return indexName != null ? indexName : getTypeInformation().getType().getSimpleName();
 	}
 
+	private String getIndexType() {
+		String ret = null;
+		if (indexType != null) {
+			try {
+				Expression expression = PARSER.parseExpression(indexType, ParserContext.TEMPLATE_EXPRESSION);
+				ExpressionDependencies expressionDependencies = ExpressionDependencies.discover(expression);
+
+				// noinspection ConstantConditions
+				EvaluationContext context = getEvaluationContext(null, expressionDependencies);
+
+				ret = expression.getValue(context, String.class);
+			} catch (EvaluationException e) {
+				LOGGER.warn("Could not resolve expression for indexType: " + indexType, e);
+			}
+		}
+		return ret != null ? ret : "";
+	}
+
 	@Override
 	public IndexCoordinates getIndexCoordinates() {
-		return resolve(IndexCoordinates.of(getIndexName()));
+		return resolve(IndexCoordinates.of(getIndexName()).withTypes(getIndexType()));
 	}
 
 	@Nullable
@@ -297,7 +328,7 @@ public class SimpleElasticsearchPersistentEntity<T> extends BasicPersistentEntit
 			resolvedNames[i] = resolve(indexName);
 		}
 
-		return IndexCoordinates.of(resolvedNames);
+		return IndexCoordinates.of(resolvedNames).withTypes(getIndexType());
 	}
 
 	/**

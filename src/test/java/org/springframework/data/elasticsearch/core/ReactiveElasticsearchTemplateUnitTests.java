@@ -20,6 +20,7 @@ import static org.elasticsearch.action.search.SearchRequest.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.data.elasticsearch.annotations.FieldType.*;
 
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -51,7 +52,6 @@ import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.ScriptedField;
 import org.springframework.data.elasticsearch.client.reactive.ReactiveElasticsearchClient;
 import org.springframework.data.elasticsearch.core.geo.GeoPoint;
-import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.Criteria;
 import org.springframework.data.elasticsearch.core.query.CriteriaQuery;
 import org.springframework.data.elasticsearch.core.query.Query;
@@ -68,7 +68,7 @@ public class ReactiveElasticsearchTemplateUnitTests {
 	@Mock ReactiveElasticsearchClient client;
 	ReactiveElasticsearchTemplate template;
 
-	private IndexCoordinates index = IndexCoordinates.of("index");
+	private IndexCoordinates index = IndexCoordinates.of("index").withTypes("type");
 
 	@BeforeEach
 	public void setUp() {

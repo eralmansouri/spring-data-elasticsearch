@@ -125,7 +125,7 @@ public class NestedObjectTests {
 		indexQueries.add(indexQuery1);
 		indexQueries.add(indexQuery2);
 
-		IndexCoordinates index = IndexCoordinates.of("test-index-person");
+		IndexCoordinates index = IndexCoordinates.of("test-index-person").withTypes("user");
 		operations.bulkIndex(indexQueries, index);
 		operations.indexOps(Person.class).refresh();
 
@@ -145,12 +145,13 @@ public class NestedObjectTests {
 		List<IndexQuery> indexQueries = createPerson();
 
 		// when
-		operations.bulkIndex(indexQueries, IndexCoordinates.of("test-index-person-multiple-level-nested"));
+		operations.bulkIndex(indexQueries,
+				IndexCoordinates.of("test-index-person-multiple-level-nested").withTypes("user"));
 		operations.indexOps(PersonMultipleLevelNested.class).refresh();
 
 		// then
 		PersonMultipleLevelNested personIndexed = operations.get("1", PersonMultipleLevelNested.class,
-				IndexCoordinates.of("test-index-person-multiple-level-nested"));
+				IndexCoordinates.of("test-index-person-multiple-level-nested").withTypes("user"));
 		assertThat(personIndexed).isNotNull();
 	}
 
@@ -161,7 +162,8 @@ public class NestedObjectTests {
 		List<IndexQuery> indexQueries = createPerson();
 
 		// when
-		operations.bulkIndex(indexQueries, IndexCoordinates.of("test-index-person-multiple-level-nested"));
+		operations.bulkIndex(indexQueries,
+				IndexCoordinates.of("test-index-person-multiple-level-nested").withTypes("user"));
 
 		// then
 		Map<String, Object> mapping = operations.indexOps(PersonMultipleLevelNested.class).getMapping();
@@ -180,7 +182,7 @@ public class NestedObjectTests {
 		List<IndexQuery> indexQueries = createPerson();
 
 		// when
-		IndexCoordinates index = IndexCoordinates.of("test-index-person-multiple-level-nested");
+		IndexCoordinates index = IndexCoordinates.of("test-index-person-multiple-level-nested").withTypes("user");
 		operations.bulkIndex(indexQueries, index);
 		operations.indexOps(PersonMultipleLevelNested.class).refresh();
 
@@ -320,7 +322,7 @@ public class NestedObjectTests {
 		indexQueries.add(indexQuery1);
 		indexQueries.add(indexQuery2);
 
-		IndexCoordinates index = IndexCoordinates.of("test-index-person");
+		IndexCoordinates index = IndexCoordinates.of("test-index-person").withTypes("user");
 		operations.bulkIndex(indexQueries, index);
 		operations.indexOps(Person.class).refresh();
 
@@ -369,7 +371,7 @@ public class NestedObjectTests {
 		indexQueries.add(indexQuery2);
 
 		// when
-		IndexCoordinates index = IndexCoordinates.of("test-index-book-nested-objects");
+		IndexCoordinates index = IndexCoordinates.of("test-index-book-nested-objects").withTypes("book");
 		operations.bulkIndex(indexQueries, index);
 		operations.indexOps(Book.class).refresh();
 

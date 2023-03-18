@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.lucene.search.TotalHits;
 import org.elasticsearch.Version;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -98,7 +97,7 @@ public class ReactiveElasticsearchTemplateCallbackTests {
 	@BeforeEach
 	public void setUp() {
 		when(client.info()).thenReturn(
-				Mono.just(new MainResponse("mockNodename", Version.CURRENT, new ClusterName("mockCluster"), "mockUuid", null)));
+				Mono.just(new MainResponse("mockNodename", Version.CURRENT, new ClusterName("mockCluster"), "mockUuid", null, true)));
 
 		template = new ReactiveElasticsearchTemplate(client);
 
@@ -136,7 +135,7 @@ public class ReactiveElasticsearchTemplateCallbackTests {
 
 		when(searchResponse.getHits()).thenReturn(
 				new org.elasticsearch.search.SearchHits(new org.elasticsearch.search.SearchHit[] { searchHit, searchHit },
-						new TotalHits(2, TotalHits.Relation.EQUAL_TO), 1.0f));
+						2, 1.0f));
 
 		doReturn(new BytesArray(new byte[8])).when(searchHit).getSourceRef();
 		doReturn(new HashMap<String, Object>() {

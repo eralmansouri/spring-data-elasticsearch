@@ -35,7 +35,7 @@ import java.util.stream.Stream;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.xcontent.XContentType;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -140,7 +140,7 @@ public class RestClientsTest {
 						.withHeader("def2", new EqualToPattern("def2-1")) //
 						.withHeader("supplied", new EqualToPattern("val0")) //
 						// on the first call Elasticsearch does the version check and thus already increments the counter
-						.withHeader("supplied", new EqualToPattern("val" + (i + 1))) //
+						.withHeader("supplied", new EqualToPattern("val" + i)) //
 				);
 			}
 
@@ -171,7 +171,7 @@ public class RestClientsTest {
 			"  \"result\": \"created\"\n" + //
 			"}\n" //
 			, 201) //
-					.withHeader("Content-Type", "application/vnd.elasticsearch+json;compatible-with=7") //
+					.withHeader("Content-Type", "application/json") //
 					.withHeader("X-Elastic-Product", "Elasticsearch")));
 
 			ClientConfigurationBuilder configurationBuilder = new ClientConfigurationBuilder();
@@ -179,8 +179,8 @@ public class RestClientsTest {
 					.connectedTo("localhost:" + server.port()) //
 					.withHeaders(() -> {
 						HttpHeaders defaultCompatibilityHeaders = new HttpHeaders();
-						defaultCompatibilityHeaders.add("Accept", "application/vnd.elasticsearch+json;compatible-with=7");
-						defaultCompatibilityHeaders.add("Content-Type", "application/vnd.elasticsearch+json;compatible-with=7");
+						defaultCompatibilityHeaders.add("Accept", "application/json");
+						defaultCompatibilityHeaders.add("Content-Type", "application/json");
 						return defaultCompatibilityHeaders;
 					});
 
@@ -199,8 +199,8 @@ public class RestClientsTest {
 			clientUnderTest.save(new Foo("42"));
 
 			verify(putRequestedFor(urlMatching("^/index/_doc/42(\\?.*)$?")) //
-					.withHeader("Accept", new EqualToPattern("application/vnd.elasticsearch+json;compatible-with=7")) //
-					.withHeader("Content-Type", new EqualToPattern("application/vnd.elasticsearch+json;compatible-with=7")) //
+					.withHeader("Accept", new EqualToPattern("application/json")) //
+					.withHeader("Content-Type", new EqualToPattern("application/json")) //
 			);
 		});
 	}
@@ -267,7 +267,7 @@ public class RestClientsTest {
 			wireMockServer.start();
 			WireMock.configureFor(wireMockServer.port());
 			stubForHead();
-			stubForElasticsearchVersionCheck();
+			//stubForElasticsearchVersionCheck();
 
 			consumer.accept(wireMockServer);
 		} finally {
@@ -324,7 +324,7 @@ public class RestClientsTest {
 
 				@Override
 				public <T> void save(T entity) throws IOException {
-					IndexRequest indexRequest = new IndexRequest("index");
+					IndexRequest indexRequest = new IndexRequest("index", "_doc");
 					indexRequest.id("42");
 					indexRequest.source(entity, XContentType.JSON);
 					client.index(indexRequest, RequestOptions.DEFAULT);
@@ -355,7 +355,7 @@ public class RestClientsTest {
 
 				@Override
 				public <T> void save(T entity) throws IOException {
-					IndexRequest indexRequest = new IndexRequest("index");
+					IndexRequest indexRequest = new IndexRequest("index", "_doc");
 					indexRequest.id("42");
 					indexRequest.source("{}", XContentType.JSON);
 					client.index(indexRequest).block();

@@ -133,6 +133,11 @@ public abstract class ElasticsearchTemplateTests {
 	private static final String INDEX_1_NAME = "test-index-1";
 	private static final String INDEX_2_NAME = "test-index-2";
 	private static final String INDEX_3_NAME = "test-index-3";
+	private static final String TYPE_NAME = "test-type";
+	protected static final String INDEX_NAME_JOIN_SAMPLE_ENTITY = "test-index-sample-join-template";
+	private static final String INDEX_NAME_SAMPLE_ENTITY = "test-index-sample-core-template";
+
+	protected final IndexCoordinates index = IndexCoordinates.of(INDEX_NAME_SAMPLE_ENTITY).withTypes(TYPE_NAME);
 
 	@Autowired protected ElasticsearchOperations operations;
 	private IndexOperations indexOperations;
@@ -396,7 +401,7 @@ public abstract class ElasticsearchTemplateTests {
 
 		IndexQuery idxQuery = new IndexQueryBuilder().withId(sampleEntity.getId()).withObject(sampleEntity).build();
 
-		operations.index(idxQuery, IndexCoordinates.of(INDEX_1_NAME));
+		operations.index(idxQuery, IndexCoordinates.of(INDEX_1_NAME).withTypes("test-type"));
 		operations.indexOps(IndexCoordinates.of(INDEX_1_NAME)).refresh();
 
 		NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(matchAllQuery())
@@ -553,17 +558,17 @@ public abstract class ElasticsearchTemplateTests {
 
 		IndexQuery idxQuery1 = new IndexQueryBuilder().withId(nextIdAsString()).withObject(sampleEntity).build();
 
-		operations.index(idxQuery1, IndexCoordinates.of(INDEX_1_NAME));
+		operations.index(idxQuery1, IndexCoordinates.of(INDEX_1_NAME).withTypes("test-type"));
 		operations.indexOps(IndexCoordinates.of(INDEX_1_NAME)).refresh();
 
 		IndexQuery idxQuery2 = new IndexQueryBuilder().withId(nextIdAsString()).withObject(sampleEntity).build();
 
-		operations.index(idxQuery2, IndexCoordinates.of(INDEX_2_NAME));
+		operations.index(idxQuery2, IndexCoordinates.of(INDEX_2_NAME).withTypes("test-type"));
 		operations.indexOps(IndexCoordinates.of(INDEX_2_NAME)).refresh();
 
 		// when
 		Query query = new NativeSearchQueryBuilder().withQuery(termQuery("message", "foo")).build();
-		operations.delete(query, SampleEntity.class, IndexCoordinates.of("test-index-*"));
+		operations.delete(query, SampleEntity.class, IndexCoordinates.of("test-index-*").withTypes(TYPE_NAME));
 
 		operations.indexOps(IndexCoordinates.of(INDEX_1_NAME)).refresh();
 		operations.indexOps(IndexCoordinates.of(INDEX_2_NAME)).refresh();
@@ -585,18 +590,18 @@ public abstract class ElasticsearchTemplateTests {
 
 		IndexQuery idxQuery1 = new IndexQueryBuilder().withId(nextIdAsString()).withObject(sampleEntity).build();
 
-		operations.index(idxQuery1, IndexCoordinates.of(INDEX_1_NAME));
+		operations.index(idxQuery1, IndexCoordinates.of(INDEX_1_NAME).withTypes("test-type"));
 		operations.indexOps(IndexCoordinates.of(INDEX_1_NAME)).refresh();
 
 		IndexQuery idxQuery2 = new IndexQueryBuilder().withId(nextIdAsString()).withObject(sampleEntity).build();
 
-		operations.index(idxQuery2, IndexCoordinates.of(INDEX_2_NAME));
+		operations.index(idxQuery2, IndexCoordinates.of(INDEX_2_NAME).withTypes("test-type"));
 		operations.indexOps(IndexCoordinates.of(INDEX_2_NAME)).refresh();
 
 		// when
 		Query query = new NativeSearchQueryBuilder().withQuery(termQuery("message", "negative")).build();
 
-		operations.delete(query, SampleEntity.class, IndexCoordinates.of("test-index-*"));
+		operations.delete(query, SampleEntity.class, IndexCoordinates.of("test-index-*").withTypes(TYPE_NAME));
 
 		operations.indexOps(IndexCoordinates.of(INDEX_1_NAME)).refresh();
 		operations.indexOps(IndexCoordinates.of(INDEX_2_NAME)).refresh();
@@ -1650,7 +1655,7 @@ public abstract class ElasticsearchTemplateTests {
 
 		IndexQuery idxQuery = new IndexQueryBuilder().withId(sampleEntity.getId()).withObject(sampleEntity).build();
 
-		IndexCoordinates index = IndexCoordinates.of(INDEX_1_NAME);
+		IndexCoordinates index = IndexCoordinates.of(INDEX_1_NAME).withTypes("test-type");
 		operations.index(idxQuery, index);
 
 		// when
@@ -1712,7 +1717,7 @@ public abstract class ElasticsearchTemplateTests {
 		indexOperations.putMapping(clazz);
 		bookIndexOperations.refresh();
 
-		IndexCoordinates bookIndex = IndexCoordinates.of("test-index-book-core-template");
+		IndexCoordinates bookIndex = IndexCoordinates.of("test-index-book-core-template").withTypes("book");
 
 		operations.index(buildIndex(SampleEntity.builder().id("1").message("ab").build()),
 				IndexCoordinates.of(indexNameProvider.indexName()));
@@ -1750,8 +1755,8 @@ public abstract class ElasticsearchTemplateTests {
 
 		// when
 		IndexCoordinates index = IndexCoordinates.of(indexNameProvider.indexName());
-		operations.index(indexQuery, index);
-
+		operations.index(indexQuery, IndexCoordinates.of(INDEX_NAME_SAMPLE_ENTITY).withTypes(TYPE_NAME));
+		indexOperations.refresh();
 		NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(termQuery("id", indexQuery.getId()))
 				.build();
 
@@ -1987,7 +1992,8 @@ public abstract class ElasticsearchTemplateTests {
 
 		IndexQuery indexQuery = new IndexQueryBuilder().withId(documentId).withObject(sampleEntity).build();
 
-		operations.index(indexQuery, IndexCoordinates.of(indexName));
+		operations.index(indexQuery, IndexCoordinates.of(INDEX_NAME_SAMPLE_ENTITY).withTypes(TYPE_NAME));
+		operations.indexOps(IndexCoordinates.of(INDEX_NAME_SAMPLE_ENTITY)).refresh();
 
 		NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(matchAllQuery()).build();
 
@@ -2098,8 +2104,8 @@ public abstract class ElasticsearchTemplateTests {
 
 		IndexQuery indexQuery2 = new IndexQueryBuilder().withId(sampleEntity2.getId()).withObject(sampleEntity2).build();
 
-		operations.index(indexQuery1, IndexCoordinates.of(INDEX_1_NAME));
-		operations.index(indexQuery2, IndexCoordinates.of(INDEX_2_NAME));
+		operations.index(indexQuery1, IndexCoordinates.of(INDEX_1_NAME).withTypes("test-type"));
+		operations.index(indexQuery2, IndexCoordinates.of(INDEX_2_NAME).withTypes("test-type"));
 		operations.indexOps(IndexCoordinates.of(INDEX_1_NAME)).refresh();
 		operations.indexOps(IndexCoordinates.of(INDEX_2_NAME)).refresh();
 
@@ -2129,8 +2135,8 @@ public abstract class ElasticsearchTemplateTests {
 
 		IndexQuery indexQuery2 = new IndexQueryBuilder().withId(sampleEntity2.getId()).withObject(sampleEntity2).build();
 
-		operations.index(indexQuery1, IndexCoordinates.of(INDEX_1_NAME));
-		operations.index(indexQuery2, IndexCoordinates.of(INDEX_2_NAME));
+		operations.index(indexQuery1, IndexCoordinates.of(INDEX_1_NAME).withTypes("test-type"));
+		operations.index(indexQuery2, IndexCoordinates.of(INDEX_2_NAME).withTypes("test-type"));
 		operations.indexOps(IndexCoordinates.of(INDEX_1_NAME)).refresh();
 		operations.indexOps(IndexCoordinates.of(INDEX_2_NAME)).refresh();
 
@@ -2199,8 +2205,8 @@ public abstract class ElasticsearchTemplateTests {
 
 		IndexQuery indexQuery2 = new IndexQueryBuilder().withId(sampleEntity2.getId()).withObject(sampleEntity2).build();
 
-		operations.index(indexQuery1, IndexCoordinates.of(INDEX_1_NAME));
-		operations.index(indexQuery2, IndexCoordinates.of(INDEX_2_NAME));
+		operations.index(indexQuery1, IndexCoordinates.of(INDEX_1_NAME).withTypes("test-type"));
+		operations.index(indexQuery2, IndexCoordinates.of(INDEX_2_NAME).withTypes("test-type"));
 		operations.indexOps(IndexCoordinates.of(INDEX_1_NAME)).refresh();
 		operations.indexOps(IndexCoordinates.of(INDEX_2_NAME)).refresh();
 
@@ -2230,8 +2236,8 @@ public abstract class ElasticsearchTemplateTests {
 
 		IndexQuery indexQuery2 = new IndexQueryBuilder().withId(sampleEntity2.getId()).withObject(sampleEntity2).build();
 
-		operations.index(indexQuery1, IndexCoordinates.of(INDEX_1_NAME));
-		operations.index(indexQuery2, IndexCoordinates.of(INDEX_2_NAME));
+		operations.index(indexQuery1, IndexCoordinates.of(INDEX_1_NAME).withTypes("test-type"));
+		operations.index(indexQuery2, IndexCoordinates.of(INDEX_2_NAME).withTypes("test-type"));
 		operations.indexOps(IndexCoordinates.of(INDEX_1_NAME)).refresh();
 		operations.indexOps(IndexCoordinates.of(INDEX_2_NAME)).refresh();
 
@@ -2399,7 +2405,6 @@ public abstract class ElasticsearchTemplateTests {
 
 		operations.index(indexQuery1, index1);
 		operations.index(indexQuery2, index2);
-
 		// when
 		NativeSearchQuery searchQuery = new NativeSearchQueryBuilder().withQuery(matchAllQuery()).build();
 		SearchHits<ResultAggregator> page = operations.search(searchQuery, ResultAggregator.class,

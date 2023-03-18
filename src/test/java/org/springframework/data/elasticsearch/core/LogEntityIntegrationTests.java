@@ -51,7 +51,7 @@ import org.springframework.lang.Nullable;
 @SpringIntegrationTest
 public abstract class LogEntityIntegrationTests {
 
-	private final IndexCoordinates index = IndexCoordinates.of("test-index-log-core");
+	private final IndexCoordinates index = IndexCoordinates.of("test-index-log-core").withTypes("test-log-type");
 	@Autowired private ElasticsearchOperations operations;
 	private IndexOperations indexOperations;
 
