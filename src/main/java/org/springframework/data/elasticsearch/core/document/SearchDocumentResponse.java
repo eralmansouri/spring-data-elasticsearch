@@ -22,7 +22,6 @@ import java.util.function.Function;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.lucene.search.TotalHits;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.common.text.Text;
 import org.elasticsearch.search.SearchHit;
@@ -135,14 +134,14 @@ public class SearchDocumentResponse {
 			@Nullable Aggregations aggregations, @Nullable org.elasticsearch.search.suggest.Suggest suggestES,
 			EntityCreator<T> entityCreator) {
 
-		TotalHits responseTotalHits = searchHits.getTotalHits();
+		Long responseTotalHits = searchHits.getTotalHits();
 
 		long totalHits;
 		String totalHitsRelation;
 
 		if (responseTotalHits != null) {
-			totalHits = responseTotalHits.value;
-			totalHitsRelation = responseTotalHits.relation.name();
+			totalHits = responseTotalHits;
+			totalHitsRelation = "OFF";
 		} else {
 			totalHits = searchHits.getHits().length;
 			totalHitsRelation = "OFF";
@@ -192,7 +191,7 @@ public class SearchDocumentResponse {
 				}
 
 				suggestions.add(new TermSuggestion(termSuggestionES.getName(), termSuggestionES.getSize(), entries,
-						suggestFrom(termSuggestionES.getSort())));
+						suggestFrom(org.elasticsearch.search.suggest.SortBy.SCORE)));
 			}
 
 			if (suggestionES instanceof org.elasticsearch.search.suggest.phrase.PhraseSuggestion) {

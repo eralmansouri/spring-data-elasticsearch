@@ -15,7 +15,7 @@
  */
 package org.springframework.data.elasticsearch.core;
 
-import static org.elasticsearch.core.TimeValue.*;
+import static org.elasticsearch.common.unit.TimeValue.timeValueSeconds;
 import static org.elasticsearch.index.query.QueryBuilders.*;
 import static org.elasticsearch.index.reindex.RemoteInfo.*;
 import static org.elasticsearch.script.Script.*;
@@ -57,7 +57,10 @@ import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.bytes.BytesReference;
 import org.elasticsearch.common.geo.GeoDistance;
 import org.elasticsearch.common.unit.DistanceUnit;
-import org.elasticsearch.core.TimeValue;
+import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.ToXContent;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.json.JsonXContent;
 import org.elasticsearch.index.VersionType;
 import org.elasticsearch.index.query.MoreLikeThisQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilder;
@@ -80,8 +83,6 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortMode;
 import org.elasticsearch.search.sort.SortOrder;
 import org.elasticsearch.search.suggest.SuggestBuilder;
-import org.elasticsearch.xcontent.ToXContent;
-import org.elasticsearch.xcontent.XContentBuilder;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.convert.ElasticsearchConverter;
@@ -165,7 +166,6 @@ class RequestFactory {
 				addES.routing(parameters.getRouting());
 				addES.indexRouting(parameters.getIndexRouting());
 				addES.searchRouting(parameters.getSearchRouting());
-				addES.isHidden(parameters.getHidden());
 				addES.writeIndex(parameters.getWriteIndex());
 
 				Query filterQuery = parameters.getFilterQuery();
@@ -352,10 +352,6 @@ class RequestFactory {
 							alias.searchRouting(parameters.getSearchRouting());
 						}
 
-						if (parameters.getHidden() != null) {
-							alias.isHidden(parameters.getHidden());
-						}
-
 						if (parameters.getWriteIndex() != null) {
 							alias.writeIndex(parameters.getWriteIndex());
 						}
@@ -405,7 +401,7 @@ class RequestFactory {
 		}
 
 		if (reindexRequest.getMaxDocs() != null) {
-			request.setMaxDocs(reindexRequest.getMaxDocs());
+			request.setSize(reindexRequest.getMaxDocs());
 		}
 		// region source build
 		final Source source = reindexRequest.getSource();
@@ -426,7 +422,7 @@ class RequestFactory {
 					: getQuery(source.getQuery());
 			BytesReference query;
 			try {
-				XContentBuilder builder = XContentBuilder.builder(QUERY_CONTENT_TYPE).prettyPrint();
+				XContentBuilder builder = XContentBuilder.builder(JsonXContent.jsonXContent).prettyPrint();
 				query = BytesReference.bytes(queryBuilder.toXContent(builder, ToXContent.EMPTY_PARAMS));
 			} catch (IOException e) {
 				throw new IllegalArgumentException("Error parsing the source query content", e);
@@ -467,7 +463,9 @@ class RequestFactory {
 			request.setDestVersionType(VersionType.fromString(versionType.name().toLowerCase(Locale.ROOT)));
 		}
 
-		final IndexQuery.OpType opType = dest.getOpType();
+		final IndexQuery.OpType opType = Boolean.TRUE.equals(reindexRequest.getRequireAlias())
+			? IndexQuery.OpType.INDEX
+			: dest.getOpType();
 		if (opType != null) {
 			request.setDestOpType(opType.name().toLowerCase(Locale.ROOT));
 		}
@@ -488,10 +486,6 @@ class RequestFactory {
 
 		if (reindexRequest.getRefresh() != null) {
 			request.setRefresh(reindexRequest.getRefresh());
-		}
-
-		if (reindexRequest.getRequireAlias() != null) {
-			request.setRequireAlias(reindexRequest.getRequireAlias());
 		}
 
 		if (reindexRequest.getRequestsPerSecond() != null) {

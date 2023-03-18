@@ -171,18 +171,16 @@ public class ByQueryResponse {
 		@Nullable private final Exception cause;
 		@Nullable private final Integer status;
 		@Nullable private final Long seqNo;
-		@Nullable private final Long term;
 		@Nullable private final Boolean aborted;
 
 		private Failure(@Nullable String index, @Nullable String type, @Nullable String id, @Nullable Exception cause,
-				@Nullable Integer status, @Nullable Long seqNo, @Nullable Long term, @Nullable Boolean aborted) {
+						@Nullable Integer status, @Nullable Long seqNo, @Nullable Boolean aborted) {
 			this.index = index;
 			this.type = type;
 			this.id = id;
 			this.cause = cause;
 			this.status = status;
 			this.seqNo = seqNo;
-			this.term = term;
 			this.aborted = aborted;
 		}
 
@@ -214,11 +212,6 @@ public class ByQueryResponse {
 		@Nullable
 		public Long getSeqNo() {
 			return seqNo;
-		}
-
-		@Nullable
-		public Long getTerm() {
-			return term;
 		}
 
 		@Nullable
@@ -291,7 +284,7 @@ public class ByQueryResponse {
 			}
 
 			public Failure build() {
-				return new Failure(index, type, id, cause, status, seqNo, term, aborted);
+				return new Failure(index, type, id, cause, status, seqNo, aborted);
 			}
 		}
 	}

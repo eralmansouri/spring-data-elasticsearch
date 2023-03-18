@@ -49,7 +49,7 @@ import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.core.TimeValue;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.MoreLikeThisQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
@@ -596,10 +596,7 @@ public class ElasticsearchRestTemplate extends AbstractElasticsearchTemplate {
 	// region helper methods
 	@Override
 	protected String getClusterVersion() {
-		try {
-			return execute(client -> client.info(RequestOptions.DEFAULT)).getVersion().getNumber();
-		} catch (Exception ignored) {}
-		return null;
+		return "6.8.8";
 	}
 
 	@Override

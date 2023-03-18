@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.elasticsearch.ExceptionsHelper;
 import org.elasticsearch.action.admin.cluster.health.ClusterHealthResponse;
 import org.elasticsearch.action.admin.indices.settings.get.GetSettingsResponse;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -33,9 +34,9 @@ import org.elasticsearch.action.get.MultiGetItemResponse;
 import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.client.indices.GetIndexResponse;
 import org.elasticsearch.client.indices.GetIndexTemplatesResponse;
-import org.elasticsearch.client.indices.IndexTemplateMetadata;
-import org.elasticsearch.cluster.metadata.AliasMetadata;
-import org.elasticsearch.cluster.metadata.MappingMetadata;
+import org.elasticsearch.client.indices.IndexTemplateMetaData;
+import org.elasticsearch.cluster.metadata.AliasMetaData;
+import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 import org.elasticsearch.common.compress.CompressedXContent;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
@@ -63,7 +64,7 @@ public class ResponseConverter {
 
 	// region alias
 
-	public static Map<String, Set<AliasData>> aliasDatas(Map<String, Set<AliasMetadata>> aliasesMetadatas) {
+	public static Map<String, Set<AliasData>> aliasDatas(Map<String, Set<AliasMetaData>> aliasesMetadatas) {
 		Map<String, Set<AliasData>> converted = new LinkedHashMap<>();
 		aliasesMetadatas.forEach((index, aliasMetaDataSet) -> {
 			Set<AliasData> aliasDataSet = new LinkedHashSet<>();
@@ -73,7 +74,7 @@ public class ResponseConverter {
 		return converted;
 	}
 
-	public static AliasData toAliasData(AliasMetadata aliasMetaData) {
+	public static AliasData toAliasData(AliasMetaData aliasMetaData) {
 		Document filter = null;
 		CompressedXContent aliasMetaDataFilter = aliasMetaData.getFilter();
 
@@ -81,7 +82,7 @@ public class ResponseConverter {
 			filter = Document.parse(aliasMetaDataFilter.string());
 		}
 		return AliasData.of(aliasMetaData.alias(), filter, aliasMetaData.indexRouting(), aliasMetaData.getSearchRouting(),
-				aliasMetaData.writeIndex(), aliasMetaData.isHidden());
+				aliasMetaData.writeIndex(), false);
 	}
 	// endregion
 
@@ -135,13 +136,13 @@ public class ResponseConverter {
 	 *
 	 * @param getIndexResponse the elastic GetIndexResponse
 	 * @param indexName the index name
-	 * @return a document that represents {@link MappingMetadata}
+	 * @return a document that represents {@link MappingMetaData}
 	 */
 	private static Document mappingsFromGetIndexResponse(GetIndexResponse getIndexResponse, String indexName) {
 		Document document = Document.create();
 
 		if (getIndexResponse.getMappings().containsKey(indexName)) {
-			MappingMetadata mappings = getIndexResponse.getMappings().get(indexName);
+			MappingMetaData mappings = getIndexResponse.getMappings().get(indexName);
 			document = Document.from(mappings.getSourceAsMap());
 		}
 
@@ -204,7 +205,7 @@ public class ResponseConverter {
 				&& (getIndexResponse.getMappings().get(indexName).get("_doc") != null);
 
 		if (responseHasMappings) {
-			MappingMetadata mappings = getIndexResponse.getMappings().get(indexName).get("_doc");
+			MappingMetaData mappings = getIndexResponse.getMappings().get(indexName).get("_doc");
 			document = Document.from(mappings.getSourceAsMap());
 		}
 
@@ -227,7 +228,7 @@ public class ResponseConverter {
 	// region templates
 	@Nullable
 	public static TemplateData getTemplateData(GetIndexTemplatesResponse getIndexTemplatesResponse, String templateName) {
-		for (IndexTemplateMetadata indexTemplateMetadata : getIndexTemplatesResponse.getIndexTemplates()) {
+		for (IndexTemplateMetaData indexTemplateMetadata : getIndexTemplatesResponse.getIndexTemplates()) {
 
 			if (indexTemplateMetadata.name().equals(templateName)) {
 
@@ -237,7 +238,7 @@ public class ResponseConverter {
 
 				Map<String, AliasData> aliases = new LinkedHashMap<>();
 
-				ImmutableOpenMap<String, AliasMetadata> aliasesResponse = indexTemplateMetadata.aliases();
+				ImmutableOpenMap<String, AliasMetaData> aliasesResponse = indexTemplateMetadata.aliases();
 				Iterator<String> keysIt = aliasesResponse.keysIt();
 				while (keysIt.hasNext()) {
 					String key = keysIt.next();
@@ -324,7 +325,7 @@ public class ResponseConverter {
 	public static ByQueryResponse byQueryResponseOf(BulkByScrollResponse bulkByScrollResponse) {
 		final List<ByQueryResponse.Failure> failures = bulkByScrollResponse.getBulkFailures() //
 				.stream() //
-				.map(ResponseConverter::byQueryResponseFailureOf) //
+				.map(ResponseConverter::byQueryResponseFailureOf)
 				.collect(Collectors.toList()); //
 
 		final List<ByQueryResponse.SearchFailure> searchFailures = bulkByScrollResponse.getSearchFailures() //
@@ -364,7 +365,6 @@ public class ResponseConverter {
 				.withAborted(failure.isAborted()) //
 				.withCause(failure.getCause()) //
 				.withSeqNo(failure.getSeqNo()) //
-				.withTerm(failure.getTerm()) //
 				.build(); //
 	}
 
@@ -381,7 +381,7 @@ public class ResponseConverter {
 				.withIndex(searchFailure.getIndex()) //
 				.withNodeId(searchFailure.getNodeId()) //
 				.withShardId(searchFailure.getShardId()) //
-				.withStatus(searchFailure.getStatus().getStatus()) //
+				.withStatus(ExceptionsHelper.status(searchFailure.getReason()).getStatus()) //
 				.build(); //
 	}
 
@@ -429,7 +429,6 @@ public class ResponseConverter {
 				.withAborted(failure.isAborted()) //
 				.withCause(failure.getCause()) //
 				.withSeqNo(failure.getSeqNo()) //
-				.withTerm(failure.getTerm()) //
 				.build(); //
 	}
 

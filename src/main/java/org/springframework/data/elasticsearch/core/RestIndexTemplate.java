@@ -39,7 +39,7 @@ import org.elasticsearch.client.indices.GetMappingsRequest;
 import org.elasticsearch.client.indices.IndexTemplatesExistRequest;
 import org.elasticsearch.client.indices.PutIndexTemplateRequest;
 import org.elasticsearch.client.indices.PutMappingRequest;
-import org.elasticsearch.cluster.metadata.MappingMetadata;
+import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.springframework.data.elasticsearch.core.document.Document;
 import org.springframework.data.elasticsearch.core.index.AliasActions;
 import org.springframework.data.elasticsearch.core.index.AliasData;
@@ -121,7 +121,7 @@ class RestIndexTemplate extends AbstractIndexTemplate implements IndexOperations
 		GetMappingsRequest mappingsRequest = requestFactory.getMappingsRequest(index);
 
 		return restTemplate.execute(client -> {
-			Map<String, MappingMetadata> mappings = client.indices() //
+			Map<String, MappingMetaData> mappings = client.indices() //
 					.getMapping(mappingsRequest, RequestOptions.DEFAULT) //
 					.mappings(); //
 

@@ -182,18 +182,16 @@ public class ReindexResponse {
 		@Nullable private final Exception cause;
 		@Nullable private final Integer status;
 		@Nullable private final Long seqNo;
-		@Nullable private final Long term;
 		@Nullable private final Boolean aborted;
 
 		private Failure(@Nullable String index, @Nullable String type, @Nullable String id, @Nullable Exception cause,
-				@Nullable Integer status, @Nullable Long seqNo, @Nullable Long term, @Nullable Boolean aborted) {
+						@Nullable Integer status, @Nullable Long seqNo, @Nullable Boolean aborted) {
 			this.index = index;
 			this.type = type;
 			this.id = id;
 			this.cause = cause;
 			this.status = status;
 			this.seqNo = seqNo;
-			this.term = term;
 			this.aborted = aborted;
 		}
 
@@ -228,11 +226,6 @@ public class ReindexResponse {
 		}
 
 		@Nullable
-		public Long getTerm() {
-			return term;
-		}
-
-		@Nullable
 		public Boolean getAborted() {
 			return aborted;
 		}
@@ -256,7 +249,6 @@ public class ReindexResponse {
 			@Nullable private Exception cause;
 			@Nullable private Integer status;
 			@Nullable private Long seqNo;
-			@Nullable private Long term;
 			@Nullable private Boolean aborted;
 
 			private FailureBuilder() {}
@@ -291,18 +283,13 @@ public class ReindexResponse {
 				return this;
 			}
 
-			public Failure.FailureBuilder withTerm(Long term) {
-				this.term = term;
-				return this;
-			}
-
 			public Failure.FailureBuilder withAborted(Boolean aborted) {
 				this.aborted = aborted;
 				return this;
 			}
 
 			public Failure build() {
-				return new Failure(index, type, id, cause, status, seqNo, term, aborted);
+				return new Failure(index, type, id, cause, status, seqNo, aborted);
 			}
 		}
 	}
